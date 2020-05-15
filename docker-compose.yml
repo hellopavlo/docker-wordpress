@@ -1,0 +1,66 @@
+version: '3.1'
+
+services:
+  wordpress:
+    depends_on:
+      - wordpressdb
+    image: wordpress:4.8
+    restart: always
+    environment:
+      VIRTUAL_HOST: wpforms-docker.local
+      VIRTUAL_PORT: 3000
+      WORDPRESS_DB_HOST: wordpressdb
+      WORDPRESS_DB_PASSWORD: password
+    volumes:
+      - wordpress:/var/www/html
+    networks:
+      - internal
+
+  wordpressdb:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - database:/var/lib/mysql
+    networks:
+      - internal
+
+  wordpress-cli:
+    depends_on:
+      - wordpressdb
+      - wordpress
+    image: wordpress:cli
+    restart: always
+    user: xfs
+    command:
+      - /bin/sh
+      - -c
+      - |
+        sleep 10 
+        wp core install --path="/var/www/html" --url="https://wpforms-docker.local" --title="WPForms in Docker" --admin_user=admin --admin_password=secret --admin_email=foo@bar.com
+        wp rewrite structure '/%postname%/' --hard
+        wp plugin install wpforms-lite --activate
+    volumes:
+      - wordpress:/var/www/html
+    networks:
+      - internal
+
+  nginx-proxy:
+    image: jwilder/nginx-proxy:alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./certs:/etc/nginx/certs
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    networks:
+      - internal
+
+volumes:
+  wordpress:
+  database:
+
+networks:
+  internal:
