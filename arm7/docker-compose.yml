@@ -4,7 +4,7 @@ services:
   wordpress:
     depends_on:
       - wordpressdb
-    image: wordpress:4.8
+    image: wordpress:4.9
     restart: always
     environment:
       VIRTUAL_HOST: wpforms-docker.local
@@ -17,9 +17,9 @@ services:
       - internal
 
   wordpressdb:
-    image: mysql:5.7
+    image: biarms/mysql:5.7
     restart: always
-    environment:
+        environment:
       MYSQL_ROOT_PASSWORD: password
     volumes:
       - database:/var/lib/mysql
@@ -37,7 +37,7 @@ services:
       - /bin/sh
       - -c
       - |
-        sleep 10 
+        sleep 10
         wp core install --path="/var/www/html" --url="https://wpforms-docker.local" --title="WPForms in Docker" --admin_user=admin --admin_password=secret --admin_email=foo@bar.com
         wp rewrite structure '/%postname%/' --hard
         wp plugin install wpforms-lite --activate
@@ -47,7 +47,7 @@ services:
       - internal
 
   nginx-proxy:
-    image: jwilder/nginx-proxy:alpine
+    image: budry/jwilder-nginx-proxy-arm
     restart: always
     ports:
       - "80:80"
